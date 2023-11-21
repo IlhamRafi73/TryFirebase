@@ -1,10 +1,15 @@
 package com.example.firebase
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
 import com.example.firebase.database.Budget
 import com.example.firebase.databinding.ActivityMainBinding
@@ -43,6 +48,9 @@ class MainActivity : AppCompatActivity() {
                 updateId = ""
                 setEmptyField()
             }
+            btnClear.setOnClickListener {
+                setEmptyField()
+            }
             listView.setOnItemClickListener { adapterView, _, i, _->
                 val item = adapterView.adapter.getItem(i) as Budget
                 updateId = item.id
@@ -66,14 +74,20 @@ class MainActivity : AppCompatActivity() {
         observeBudgetChanges()
     }
     private fun observeBudgets() {
-        budgetListLiveData.observe(this) { budgets->
-            val adapter = ArrayAdapter(
-                this,
-                android.R.layout.simple_list_item_1,
-                budgets.toMutableList()
-            )
+        budgetListLiveData.observe(this) { budgets ->
+            val adapter = BudgetAdapter(this, budgets)
             binding.listView.adapter = adapter
         }
+
+        // Old code
+//        budgetListLiveData.observe(this) { budgets->
+//            val adapter = ArrayAdapter(
+//                this,
+//                android.R.layout.simple_list_item_1,
+//                budgets.toMutableList()
+//            )
+//            binding.listView.adapter = adapter
+//        }
     }
     private fun observeBudgetChanges() {
         budgetCollectionRef.addSnapshotListener { snapshots, error->
@@ -123,6 +137,28 @@ class MainActivity : AppCompatActivity() {
             edtNominal.setText("")
             edtDesc.setText("")
             edtDate.setText("")
+        }
+    }
+    inner class BudgetAdapter(
+        context: Context,
+        private val budgets: List<Budget>
+    ) : ArrayAdapter<Budget>(context, R.layout.item_container, budgets) {
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val itemView = inflater.inflate(R.layout.item_container, parent, false)
+
+            val tvNominal: TextView = itemView.findViewById(R.id.tvNominal)
+            val tvDescription: TextView = itemView.findViewById(R.id.tvDescription)
+            val tvDate: TextView = itemView.findViewById(R.id.tvDate)
+
+            val budget = budgets[position]
+
+            tvNominal.text = budget.nominal
+            tvDescription.text = budget.description
+            tvDate.text = budget.date
+
+            return itemView
         }
     }
 }
